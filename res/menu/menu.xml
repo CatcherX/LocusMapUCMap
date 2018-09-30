@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/menu_1"
+        android:title="线路图"
+        android:orderInCategory="100"/>
+    <item android:id="@+id/menu_2"
+        android:title="地形图"
+        android:orderInCategory="100"/>
+    <item android:id="@+id/menu_3"
+        android:title="卫星图"
+        android:orderInCategory="100"/>
+        <item
+        android:id="@+id/menu_4"
+        android:orderInCategory="100"
+        android:title="开始路径分析"/>
+    <item
+        android:id="@+id/menu_5"
+        android:orderInCategory="100"
+        android:title="结束路径分析"/>
+</menu>
