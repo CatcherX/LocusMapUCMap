@@ -44,16 +44,16 @@
             android:name=".HistoryLocus"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
-            android:launchMode="singleInstance" >
+            android:launchMode="singleTask" >
         </activity>
         <activity
-            android:name=".GPXList"
+            android:name=".GPXListActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:launchMode="singleInstance" >
         </activity>
         <activity
-            android:name=".Setting"
+            android:name=".SettingActivity"
             android:label="设置"
             android:screenOrientation="portrait"
             android:launchMode="singleInstance"

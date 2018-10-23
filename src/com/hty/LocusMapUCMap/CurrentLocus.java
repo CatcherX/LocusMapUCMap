@@ -3,6 +3,7 @@ package com.hty.LocusMapUCMap;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -44,7 +45,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 
 public class CurrentLocus extends Activity implements UCFeatureLayerListener, LocationListener {
 
-	TextView textView_data, textView_upload;
+	TextView textView_current, textView_upload;
 	CheckBox checkBoxFollow;
 
 	UCMapView mapView;
@@ -66,21 +67,24 @@ public class CurrentLocus extends Activity implements UCFeatureLayerListener, Lo
 	Date time_start;
 	SharedPreferences sharedPreferences;
 	String upload_server = "", SR = "", filename_gpx = "";
+	DecimalFormat DF1 = new DecimalFormat("0.0");
+	DecimalFormat DF2 = new DecimalFormat("0.00");
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_current);
 		MainApplication.getInstance().addActivity(this);
+		MainApplication.setMode("map");
 		SDF_time.setTimeZone(TimeZone.getTimeZone("GMT+0"));
 		UCMapView.setTileScale(0.5f);
 		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		upload_server = sharedPreferences.getString("uploadServer", "http://sonichy.gearhostpreview.com/locusmap");
-		textView_data = (TextView) findViewById(R.id.textView_data);
+		textView_current = (TextView) findViewById(R.id.textView_current);
 		textView_upload = (TextView) findViewById(R.id.textView_upload);
 		checkBoxFollow = (CheckBox) findViewById(R.id.checkBoxFollow);
 
-		mapView = (UCMapView) this.findViewById(R.id.mapView);
+		mapView = (UCMapView) findViewById(R.id.mapView_current);
 		mapView.setBackgroundColor(0xFFFFFFFF);
 		mapView.addScaleBar();
 		mapView.rotation(false);
@@ -92,9 +96,6 @@ public class CurrentLocus extends Activity implements UCFeatureLayerListener, Lo
 			@Override
 			public double[] to(double x, double y) {
 				double[] result = new double[2];
-				// result[0] = x + 0.006234466132212901;
-				// result[1] = y + 0.001395863063969216;
-				// GCJ02 to WGS84
 				Gps gps = PositionUtil.gps84_To_Gcj02(y, x);
 				result[0] = gps.getWgLon();
 				result[1] = gps.getWgLat();
@@ -104,10 +105,7 @@ public class CurrentLocus extends Activity implements UCFeatureLayerListener, Lo
 			@Override
 			public double[] from(double x, double y) {
 				double[] result = new double[2];
-				// result[0] = x - 0.006234466132212901;
-				// result[1] = y - 0.001395863063969216;
-				// GCJ02 to WGS84
-				Gps gps = PositionUtil.gps84_To_Gcj02(y, x);
+				Gps gps = PositionUtil.gcj_To_Gps84(y, x);
 				result[0] = gps.getWgLon();
 				result[1] = gps.getWgLat();
 				return result;
@@ -258,6 +256,7 @@ public class CurrentLocus extends Activity implements UCFeatureLayerListener, Lo
 			mapView.refresh();
 		} else if (id == 8) {
 			MainApplication.setrfn("");
+			MainApplication.setMode("");
 			finish();
 		}
 		return super.onOptionsItemSelected(item);
@@ -266,13 +265,6 @@ public class CurrentLocus extends Activity implements UCFeatureLayerListener, Lo
 	static Feature feature(String id, Object... values) {
 		Feature current = new BasicFeature(id, Arrays.asList(values));
 		return current;
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		enableAvailableProviders();
-		mapView.setCoordinateFilter(filter);
 	}
 
 	@Override
@@ -325,17 +317,23 @@ public class CurrentLocus extends Activity implements UCFeatureLayerListener, Lo
 		Geometry geo = GF.createLineString(coords);
 		vlayer.addLine(geo, 1, 0xFF00FF00);
 		// mapView.refresh();
-		dist = cn.creable.ucmap.openGIS.Arithmetic.Distance(GF.createPoint(new Coordinate(lgt0, ltt0)), GF.createPoint(new Coordinate(lgt, ltt)));
+		// dist =
+		// cn.creable.ucmap.openGIS.Arithmetic.Distance(GF.createPoint(new
+		// Coordinate(lgt0, ltt0)), GF.createPoint(new Coordinate(lgt, ltt)));
+		float[] results = new float[1];
+		Location.distanceBetween(ltt, lgt, ltt0, lgt0, results);
+		dist = results[0];
 		lc += dist;
 		lgt0 = lgt;
 		ltt0 = ltt;
 		Date date = new Date();
 		long duration = date.getTime() - time_start.getTime();
-
-		RWXML.add(filename_gpx, SDF.format(date), String.valueOf(ltt), String.valueOf(lgt), String.valueOf(dist), SDF_time.format(duration));
+		RWXML.add(filename_gpx, SDF.format(date), String.valueOf(ltt), String.valueOf(lgt), String.valueOf(lc), SDF_time.format(duration));
 		new Thread(t).start();
-		textView_data.setText(SDF.format(time_start) + "\n经度：" + lgt + "\n纬度：" + ltt + "\n高度：" + location.getAltitude() + " 米\n速度：" + speed + " 米/秒\n精度："
-				+ location.getAccuracy() + " 米\n位移：" + dist + " 米\n时长：" + SDF_time.format(duration) + "\n路程：" + lc + " 米");
+		textView_current
+				.setText(SDF.format(time_start) + "\n经度：" + lgt + "\n纬度：" + ltt + "\n高度：" + location.getAltitude() + " 米\n速度：" + DF1.format(speed)
+						+ " 米/秒\n精度：" + location.getAccuracy() + " 米\n位移：" + DF2.format(dist) + " 米\n时长：" + SDF_time.format(duration) + "\n路程："
+						+ DF2.format(lc) + " 米");
 		textView_upload.setText("上传：" + SR);
 	}
 
@@ -357,6 +355,13 @@ public class CurrentLocus extends Activity implements UCFeatureLayerListener, Lo
 	@Override
 	protected void onPause() {
 		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		enableAvailableProviders();
+		mapView.setCoordinateFilter(filter);
 	}
 
 	@Override
@@ -391,10 +396,11 @@ public class CurrentLocus extends Activity implements UCFeatureLayerListener, Lo
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 			}
-			String SU = upload_server + "/add.php?date=" + dateu + "&time=" + timeu + "&longitude=" + lgt + "&latitude=" + ltt + "&speed=" + speed
-					+ "&distance=" + dist;
+			String SU = upload_server + "/add.php?date=" + dateu + "&time=" + timeu + "&longitude=" + lgt + "&latitude=" + ltt + "&speed=" + DF1.format(speed)
+					+ "&distance=" + DF2.format(dist);
 			SR = Utils.sendURLResponse(SU);
-			RWXML.append(Environment.getExternalStorageDirectory().getPath() + "/LocusMap/UCMap.log", SDF.format(date) + "CurrentLocus.upload:" + SU);
+			RWXML.append(Environment.getExternalStorageDirectory().getPath() + "/LocusMap/UCMap.log", "CurrentLocus.upload:" + SU);
 		}
 	};
+
 }

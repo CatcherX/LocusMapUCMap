@@ -3,12 +3,12 @@
     android:layout_height="match_parent">
 
     <cn.creable.ucmap.openGIS.UCMapView
-        android:id="@+id/mapView"
+        android:id="@+id/mapView_history"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
     
     <TextView
-        android:id="@+id/textView_data"
+        android:id="@+id/textView_history"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Locus"
@@ -35,5 +35,15 @@
 	    android:checked="false"
 	    android:text="跟随"
 	    android:textColor="#000000" />
+
+	<ImageButton
+	    android:id="@+id/imageButton_location"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_alignParentLeft="true"
+	    android:layout_alignTop="@+id/checkBoxFollow"
+	    android:layout_marginLeft="16dp"
+	    android:background="#00000000"
+	    android:src="@android:drawable/ic_menu_mylocation" />
 
 </RelativeLayout>

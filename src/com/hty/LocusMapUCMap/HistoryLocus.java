@@ -8,7 +8,9 @@ import org.jeo.vector.BasicFeature;
 import org.jeo.vector.Feature;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
@@ -16,10 +18,14 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.CheckBox;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import cn.creable.ucmap.openGIS.UCCoordinateFilter;
@@ -37,7 +43,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 
 public class HistoryLocus extends Activity implements UCFeatureLayerListener, LocationListener {
 
-	TextView textView1;
+	TextView textView_history;
 	CheckBox checkBoxFollow;
 
 	UCMapView mapView;
@@ -51,8 +57,11 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 	int type;
 	BitmapDrawable BD_start, BD_end;
 	GeometryFactory gf = new GeometryFactory();
+	Coordinate coord0;
 	double lgt, ltt, lgt0, ltt0;
 	boolean isFirst = true;
+	String filename = "";
+	ImageButton imageButton_location;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -60,10 +69,12 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 		MainApplication.getInstance().addActivity(this);
 		UCMapView.setTileScale(0.5f);
 		setContentView(R.layout.activity_history);
-		textView1 = (TextView) findViewById(R.id.textView_data);
+		textView_history = (TextView) findViewById(R.id.textView_history);
 		checkBoxFollow = (CheckBox) findViewById(R.id.checkBoxFollow);
+		imageButton_location = (ImageButton) findViewById(R.id.imageButton_location);
+		imageButton_location.setOnClickListener(new ButtonListener());
 
-		mapView = (UCMapView) this.findViewById(R.id.mapView);
+		mapView = (UCMapView) findViewById(R.id.mapView_history);
 		mapView.setBackgroundColor(0xFFFFFFFF);
 		mapView.addScaleBar();
 		mapView.rotation(false);
@@ -81,7 +92,7 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 			@Override
 			public double[] from(double x, double y) {
 				double[] result = new double[2];
-				Gps gps = PositionUtil.gps84_To_Gcj02(y, x);
+				Gps gps = PositionUtil.gcj_To_Gps84(y, x);
 				result[0] = gps.getWgLon();
 				result[1] = gps.getWgLat();
 				return result;
@@ -146,6 +157,17 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 		BD_end = (BitmapDrawable) getResources().getDrawable(R.drawable.marker_end);
 	}
 
+	class ButtonListener implements OnClickListener {
+		@Override
+		public void onClick(View v) {
+			switch (v.getId()) {
+			case R.id.imageButton_location:
+				mapView.moveTo(coord0.x, coord0.y, mapView.getScale());
+				break;
+			}
+		}
+	}
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		menu.add(0, 0, 0, "线路图");
@@ -158,6 +180,7 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 		menu.add(0, 7, 7, "停止测量");
 		menu.add(0, 8, 8, "BD09转GCJ02");
 		menu.add(0, 9, 9, "还原坐标");
+		menu.add(0, 10, 10, "删除");
 		return true;
 	}
 
@@ -253,6 +276,28 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 		} else if (id == 9) {
 			mapView.setCoordinateFilter(filter_WGS_to_GCJ);
 			mapView.refresh();
+		} else if (id == 10) {
+			new AlertDialog.Builder(HistoryLocus.this).setIcon(R.drawable.warn).setTitle("删除操作").setMessage("此步骤不可还原，确定删除\n" + filename + " ？")
+					.setPositiveButton("是", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+							String ttext = null;
+							Log.e(" MainApplication.getfn()", MainApplication.getfn());
+							Log.e("MainApplication.getrfn()", MainApplication.getrfn());
+							if (!filename.equals(MainApplication.getrfn())) {
+								ttext = filename + " 已删除！";
+								RWXML.del(filename);
+								startActivity(new Intent(HistoryLocus.this, GPXListActivity.class));
+							} else {
+								ttext = "此文件正在写入数据，请先结束行程！";
+							}
+							Toast.makeText(getApplicationContext(), ttext, Toast.LENGTH_SHORT).show();
+						}
+					}).setNegativeButton("否", new DialogInterface.OnClickListener() {
+						@Override
+						public void onClick(DialogInterface dialog, int which) {
+						}
+					}).show();
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -317,11 +362,25 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 	}
 
 	@Override
+	protected void onNewIntent(Intent intent) {
+		super.onNewIntent(intent);
+		Log.e("onNewIntent", "onNewIntent");
+		setIntent(intent); // must store the new intent unless getIntent() will return the old one
+	}
+
+	@Override
 	protected void onResume() {
 		super.onResume();
+		Log.e("onResume", "onResume");
 		mapView.setCoordinateFilter(filter_WGS_to_GCJ);
 		enableAvailableProviders();
-		if (!MainApplication.getfn().equals("")) {
+		Intent intent = getIntent();
+		Log.e("intent", intent.toString());
+		String filename1 = intent.getStringExtra("filename");
+		Log.e("filename1", filename1);
+		// if (!MainApplication.getfn().equals("")) {
+		if (!filename.equals(filename1) || filename1.equals(MainApplication.getrfn())) {
+			filename = filename1;
 			if (vlayer != null) {
 				mapView.deleteLayer(vlayer);
 			}
@@ -330,19 +389,22 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 				mapView.deleteLayer(mlayer);
 			}
 			mlayer = mapView.addMarkerLayer(null);
-			Coordinate[] coords = RWXML.read(MainApplication.getfn());
-			textView1.setText(MainApplication.getmsg() + "\n" + coords.length + " 个点");
+			filename = MainApplication.getfn();
+			Coordinate[] coords = RWXML.read(filename);
+			textView_history.setText(MainApplication.getmsg() + "\n" + coords.length + " 个点");
 			Geometry geo = gf.createLineString(coords);
 			vlayer.addLine(geo, 1, 0xFF0000FF);
 			mlayer.addBitmapItem(BD_start.getBitmap(), coords[0].x, coords[0].y, "", "");
 			mlayer.addBitmapItem(BD_end.getBitmap(), coords[coords.length - 1].x, coords[coords.length - 1].y, "", "");
-			mapView.moveTo(coords[1].x, coords[1].y, mapView.getScale());
+			coord0 = coords[coords.length / 2];
+			mapView.moveTo(coords[coords.length / 2].x, coords[coords.length / 2].y, mapView.getScale());
 		}
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
+		Log.e("onPause", "onPause");
 		if (locationManager != null)
 			locationManager.removeUpdates(this);
 	}
@@ -350,7 +412,7 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
-			startActivity(new Intent(HistoryLocus.this, GPXList.class));
+			startActivity(new Intent(HistoryLocus.this, GPXListActivity.class));
 			return true;
 		}
 		return super.onKeyDown(keyCode, event);

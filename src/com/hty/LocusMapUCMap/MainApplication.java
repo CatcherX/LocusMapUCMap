@@ -9,9 +9,7 @@ import android.content.Context;
 
 public class MainApplication extends Application {
 	private static Context mContext;
-	private static String rfn;
-	private static String fn;
-	private static String msg;
+	private static String rfn, fn, msg, mode = "";
 	private final List<Activity> activityList = new LinkedList<Activity>();
 	private static MainApplication instance;
 
@@ -43,6 +41,14 @@ public class MainApplication extends Application {
 
 	public static String getfn() {
 		return fn;
+	}
+
+	public static void setMode(String s) {
+		mode = s;
+	}
+
+	public static String getMode() {
+		return mode;
 	}
 
 	public static Context getContext() {

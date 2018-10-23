@@ -3,6 +3,7 @@ package com.hty.LocusMapUCMap;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
@@ -32,13 +33,12 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 public class NoMapActivity extends Activity {
 	boolean isFirstLoc = true;
 	TextView textView_location, textView_timer, textView_gpsStatus, textView_upload;
-	double lc = 0, lc0 = 0, speed = 0, speedmax = 0, pi = 3.14, ltt, lgt, alt, ltt1, lgt1, distance = 0, distancesend = 0, lc1 = 0, distance1, speed1,
+	double lc = 0, lc0 = 0, speed = 0, speedmax = 0, pi = 3.14, ltt, lgt, alt, ltt0, lgt0, dist = 0, distancesend = 0, lc1 = 0, distance1, speed1,
 			speedmax1 = 0;
 	float direction;
 	Date date, time_start, datel;
@@ -54,12 +54,14 @@ public class NoMapActivity extends Activity {
 	SharedPreferences sharedPreferences;
 	String uploadServer = "", filename_gpx = "";
 	GeometryFactory GF = new GeometryFactory();
+	DecimalFormat DF2 = new DecimalFormat("0.00");
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_nomap);
 		MainApplication.getInstance().addActivity(this);
+		MainApplication.setMode("nomap");
 		sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		uploadServer = sharedPreferences.getString("uploadServer", "http://sonichy.gearhostpreview.com/locusmap");
 		timeformat.setTimeZone(TimeZone.getDefault());
@@ -187,28 +189,32 @@ public class NoMapActivity extends Activity {
 			String slgt = String.valueOf(location.getLongitude());
 			String sltt = String.valueOf(location.getLatitude());
 			datel = new Date(location.getTime());
-			textView_location.setText(dateformat.format(datel));
+			textView_location.setText("开始：" + dateformat.format(time_start));
+			textView_location.append("\n此次：" + dateformat.format(datel));
 			textView_location.append("\n经度：" + slgt);
 			textView_location.append("\n纬度：" + sltt);
 			textView_location.append("\n海拔：" + alt + "米");
-			textView_location.append("\n速度：" + speed + "米/秒");
-			textView_location.append("\n" + location.toString());
+			textView_location.append("\n速度：" + DF2.format(speed) + " 米/秒");
+			// textView_location.append("\n" + location.toString());
 			if (isFirstLoc) {
 				isFirstLoc = false;
-			} else {
-				// distance = Utils.getDistance(lgt, ltt, lgt1, ltt1);
-				double distance = cn.creable.ucmap.openGIS.Arithmetic.Distance(GF.createPoint(new Coordinate(lgt, ltt)),
-						GF.createPoint(new Coordinate(lgt1, ltt1)));
-				lc += distance;
-				date = new Date();
-				duration = date.getTime() - time_start.getTime();
-				sduration = timeformatd.format(duration);
-				textView_timer.setText(sduration);
-				textView_location.append("\n位移：" + String.valueOf(distance) + "米");
+				lgt0 = lgt;
+				ltt0 = ltt;
 			}
-			lgt1 = lgt;
-			ltt1 = ltt;
-			textView_location.append("\n路程：" + lc + "米");
+			float[] results = new float[1];
+			Location.distanceBetween(ltt, lgt, ltt0, lgt0, results);
+			dist = results[0];
+			lc += dist;
+			textView_location.append("\n位移：" + DF2.format(dist) + " 米");
+			textView_location.append("\n路程：" + DF2.format(lc) + " 米");
+			date = new Date();
+			duration = date.getTime() - time_start.getTime();
+			sduration = timeformatd.format(duration);
+			textView_timer.setText("时长：" + sduration);
+
+			lgt0 = lgt;
+			ltt0 = ltt;
+
 			RWXML.add(filename_gpx, dateformat.format(datel), sltt, slgt, String.valueOf(lc), sduration);
 			if (c > 10) {
 				new Thread(t).start();
@@ -249,7 +255,7 @@ public class NoMapActivity extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		menu.add(0, 0, 0, "退出");
+		menu.add(0, 0, 0, "结束");
 		return true;
 	}
 
@@ -259,6 +265,7 @@ public class NoMapActivity extends Activity {
 		switch (item_id) {
 		case 0:
 			MainApplication.setrfn("");
+			MainApplication.setMode("");
 			finish();
 			break;
 		}
@@ -272,10 +279,6 @@ public class NoMapActivity extends Activity {
 			return true;
 		}
 		return super.onKeyDown(keyCode, event);
-	}
-
-	private String m(int i) {
-		return i < 10 ? "0" + i : "" + i;
 	}
 
 	public static final boolean isGPSOpen(final Context context) {
@@ -313,7 +316,7 @@ public class NoMapActivity extends Activity {
 				e.printStackTrace();
 			}
 			final String SU = uploadServer + "?date=" + dateu + "&time=" + timeu + "&longitude=" + lgt + "&latitude=" + ltt + "&speed=" + speed + "&distance="
-					+ distance;
+					+ dist;
 			RC = Utils.sendURLResponse(SU);
 			runOnUiThread(new Runnable() {
 				@Override
@@ -321,7 +324,6 @@ public class NoMapActivity extends Activity {
 					textView_upload.setText(SU + "\nResponseCode: " + RC);
 				}
 			});
-			// distancesend = 0;
 		}
 	});
 
