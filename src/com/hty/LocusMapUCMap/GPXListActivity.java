@@ -1,10 +1,14 @@
 package com.hty.LocusMapUCMap;
 
+import java.io.File;
+
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.KeyEvent;
@@ -15,10 +19,11 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class GPXListActivity extends ListActivity {
-	ListView lv;
+	ListView listView;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -29,17 +34,31 @@ public class GPXListActivity extends ListActivity {
 	}
 
 	@Override
-	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo info) {
-		menu.setHeaderTitle("文件操作");
-		menu.add(0, 1, 0, "删除");
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+		String title = ((TextView) info.targetView.findViewById(android.R.id.text1)).getText().toString();
+		menu.setHeaderTitle(title);
+		menu.add(0, 0, 0, "分享");
+		menu.add(0, 1, 1, "删除");
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 		switch (item.getItemId()) {
+		case 0:
+			String filename = listView.getItemAtPosition(info.position).toString();
+			if (filename.toLowerCase().endsWith(".gpx")) {
+				String filepath = Environment.getExternalStorageDirectory().getPath() + "/LocusMap/" + filename;
+				Intent intent = new Intent();
+				intent.setAction(Intent.ACTION_SEND);
+				intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(filepath)));
+				intent.setType("*/*");
+				startActivity(Intent.createChooser(intent, "分享 " + filename));
+			}
+			break;
 		case 1:
-			final String file = lv.getItemAtPosition(info.position).toString();
+			final String file = listView.getItemAtPosition(info.position).toString();
 			if (file.toLowerCase().endsWith(".gpx")) {
 				new AlertDialog.Builder(GPXListActivity.this).setIcon(R.drawable.warn).setTitle("删除操作").setMessage("此步骤不可还原，确定删除\n" + file + " ？")
 						.setPositiveButton("是", new DialogInterface.OnClickListener() {
@@ -97,11 +116,11 @@ public class GPXListActivity extends ListActivity {
 		String[] s = RWXML.gpxlist();
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_expandable_list_item_1, s);
 		setListAdapter(adapter);
-		lv = getListView();
-		lv.setOnItemClickListener(new OnItemClickListener() {
+		listView = getListView();
+		listView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-				String filename = lv.getItemAtPosition(arg2).toString();
+				String filename = listView.getItemAtPosition(arg2).toString();
 				// Log.e("filename", filename);
 				// Log.e("MainApplication.getrfn()", MainApplication.getrfn());
 				if (filename.toLowerCase().endsWith(".gpx")) {

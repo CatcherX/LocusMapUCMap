@@ -315,7 +315,7 @@ public class CurrentLocus extends Activity implements UCFeatureLayerListener, Lo
 		coords[0] = new Coordinate(lgt, ltt);
 		coords[1] = new Coordinate(lgt0, ltt0);
 		Geometry geo = GF.createLineString(coords);
-		vlayer.addLine(geo, 1, 0xFF00FF00);
+		vlayer.addLine(geo, 2, 0xFF00FF00);
 		// mapView.refresh();
 		// dist =
 		// cn.creable.ucmap.openGIS.Arithmetic.Distance(GF.createPoint(new

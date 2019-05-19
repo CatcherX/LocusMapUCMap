@@ -1,5 +1,7 @@
 package com.hty.LocusMapUCMap;
 
+import java.util.Calendar;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
@@ -15,8 +17,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.TextView;
 
 public class MenuActivity extends Activity {
+	TextView textView_copyright;
 	Button button_map, button_history, button_server, button_set, button_about, button_quit, button_nomap;
 	int i = 0;
 	String upload_server = "";
@@ -28,6 +32,9 @@ public class MenuActivity extends Activity {
 		MainApplication.getInstance().addActivity(this);
 		MainApplication.setrfn("");
 		setContentView(R.layout.activity_menu);
+		textView_copyright = (TextView) findViewById(R.id.textView_copyright);
+		Calendar date = Calendar.getInstance();
+		textView_copyright.setText("© Copyright 2018-" + String.valueOf(date.get(Calendar.YEAR)) + " 海天鹰版权所有");
 
 		button_nomap = (Button) findViewById(R.id.button_nomap);
 		button_map = (Button) findViewById(R.id.button_map);
@@ -86,9 +93,9 @@ public class MenuActivity extends Activity {
 			case R.id.button_about:
 				new AlertDialog.Builder(MenuActivity.this)
 						.setIcon(R.drawable.ic_launcher)
-						.setTitle("轨迹地图UCMap版  V1.0")
+						.setTitle("轨迹地图UCMap版  V1.1")
 						.setMessage(
-								"利用UCMap提供的地图、定位、绘图和手机的GPS功能绘制、记录位移轨迹，查看记录的轨迹，上传GPS数据到服务器。\n作者：黄颖\nE-mail：sonichy@163.com\nQQ：84429027\n\n更新历史\n1.0 (2018-09-19)\n在地图上定位当前位置")
+								"利用UCMap提供的地图、定位、绘图和手机的GPS功能绘制、记录位移轨迹，查看记录的轨迹，上传GPS数据到服务器。\n作者：黄颖\nE-mail：sonichy@163.com\nQQ：84429027\n源码：https://github.com/sonichy/LocusMapUCMap")
 						.setPositiveButton("确定", null).show();
 				break;
 			case R.id.button_quit:

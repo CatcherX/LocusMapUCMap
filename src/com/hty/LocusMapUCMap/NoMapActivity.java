@@ -69,7 +69,7 @@ public class NoMapActivity extends Activity {
 		textView_location = (TextView) findViewById(R.id.textView_location);
 		textView_gpsStatus = (TextView) findViewById(R.id.textView_gpsStatus);
 		textView_upload = (TextView) findViewById(R.id.textView_upload);
-		textView_timer = (TextView) findViewById(R.id.textView2);
+		textView_timer = (TextView) findViewById(R.id.textView_copyright);
 		time_start = new Date();
 		filename_gpx = dateformat1.format(time_start) + "UC.gpx";
 		MainApplication.setrfn(filename_gpx);

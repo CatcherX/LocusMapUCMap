@@ -393,7 +393,7 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 			Coordinate[] coords = RWXML.read(filename);
 			textView_history.setText(MainApplication.getmsg() + "\n" + coords.length + " 个点");
 			Geometry geo = gf.createLineString(coords);
-			vlayer.addLine(geo, 1, 0xFF0000FF);
+			vlayer.addLine(geo, 2, 0xFF0000FF);
 			mlayer.addBitmapItem(BD_start.getBitmap(), coords[0].x, coords[0].y, "", "");
 			mlayer.addBitmapItem(BD_end.getBitmap(), coords[coords.length - 1].x, coords[coords.length - 1].y, "", "");
 			coord0 = coords[coords.length / 2];
