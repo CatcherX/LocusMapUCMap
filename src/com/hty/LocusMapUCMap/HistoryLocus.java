@@ -16,6 +16,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -181,6 +182,7 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 		menu.add(0, 8, 8, "BD09转GCJ02");
 		menu.add(0, 9, 9, "还原坐标");
 		menu.add(0, 10, 10, "删除");
+		menu.add(0, 11, 11, "分享");
 		return true;
 	}
 
@@ -298,6 +300,13 @@ public class HistoryLocus extends Activity implements UCFeatureLayerListener, Lo
 						public void onClick(DialogInterface dialog, int which) {
 						}
 					}).show();
+		} else if (id == 11) {
+			String filepath = Environment.getExternalStorageDirectory().getPath() + "/LocusMap/" + filename;
+			Intent intent = new Intent();
+			intent.setAction(Intent.ACTION_SEND);
+			intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(filepath)));
+			intent.setType("*/*");
+			startActivity(Intent.createChooser(intent, "分享 " + filename));
 		}
 		return super.onOptionsItemSelected(item);
 	}
